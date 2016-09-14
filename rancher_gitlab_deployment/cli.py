@@ -15,9 +15,9 @@ from time import sleep
 @click.option('--environment', default=None,
               help="The name of the environment to add the host into " + \
                    "(only needed if you are using an account API key instead of an environment API key)")
-@click.option('--stack', default=None, required=True,
+@click.option('--stack', envvar='CI_PROJECT_NAMESPACE', default=None, required=True,
               help="The name of the stack in Rancher (defaults to the name of the group in GitLab)")
-@click.option('--service', default=None, required=True,
+@click.option('--service', envvar='CI_PROJECT_NAME', default=None, required=True,
               help="The name of the service in Rancher to upgrade (defaults to the name of the service in GitLab)")
 @click.option('--start-before-stopping/--no-start-before-stopping', default=True,
               help="Should Rancher start new containers before stopping the old ones?")

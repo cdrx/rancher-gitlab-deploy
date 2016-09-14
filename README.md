@@ -1,84 +1,165 @@
-# Rancher Agent Registration Tool
+# Rancher GitLab Deployment Tool
 
-**rancher-agent-registration** is a command line tool for registering the current host with a Rancher server.
+**rancher-gitlab-deployment** is a tool for deploying containers built with GitLab CI onto your Rancher infrastructure. It fits neatly into the `gitlab-ci.yml` workflow and requires minimal configuration. It will upgrade existing services as part of your CI workflow.
 
-Rancher asks you to run the agent container on each host, giving you the command to run that looks a bit like this:
+Both GitLab's built in Docker registry and external Docker registries are supported.
 
-```
-sudo docker run [snipped] rancher/agent:v0.11.0 https://rancher/v1/scripts/<registration-token>
-```
+`rancher-gitlab-deploy` will pick as much of its configuration up as possible from environment variables set by the GitLab CI runner.
 
-For interactive deployments, thats fine.
-
-But if you need to deploy a new host using something like Salt / Ansible / Chef / etc, then you cant know the registration token in advance, making it impossible.
-
-Enter rancher-agent-registration. Run the tool on the host you want to register, and it will negotiate a new registration token with the Rancher API and then launch the rancher-agent container in Docker.
+This tool is not suitable if your services are not already created in Rancher. It will upgrade existing services, but will not create new ones. If you need to create services you should use `rancher-compose` in your CI workflow, but that means storing any secret environment variables in your Git repo.
 
 ## Installation
 
+I recommend you use the pre-built container:
+
+https://hub.docker.com/r/cdrx/rancher-gitlab-deployment/
+
+But you can install the command locally, with `pip`, if you prefer:
+
 ```
-pip install rancher-agent-registration
+pip install rancher-gitlab-deployment
 ```
 
 ## Usage
 
-Rancher supports two kind of API keys: environment and account. You can use either with this tool, but if your account key has access to more than one environment you'll need to pass the name of the environment to the --environment flag so that the host is registered in the right place.
+You will need to create a set of API keys in Rancher and save them as secret variables in GitLab for your project.
 
-You can run the tool interactivly and it will prompt you for the settings it needs, otherwise you must pass at least --url, --key and --secret on the command line.
+Three secret variables are required:
 
-If you want to test rancher-agent-registration, you can pass --echo and it will print the docker command to run to the console instead of running it.
+`RANCHER_URL` (eg `https://rancher.example.com`)
+`RANCHER_SECRET_KEY`
+`RANCHER_ACCESS_KEY`
 
-You can specify labels for your rancher host by passing in `--label key=value` for each label.
-
-## SaltStack example
-
-rancher.sls:
+Rancher supports two kind of API keys: environment and account. You can use either with this tool, but if your account key has access to more than one environment you'll need to specify the name of the environment with the --environment flag. This is so that the tool can upgrade find the service in the right place. For example, in your `gitlab-ci.yml`:
 
 ```
-rancher-agent-registration:
-  pip.installed:
-    - name: rancher-agent-registration
+deploy:
+  stage: deploy
+  image: cdrx/rancher-gitlab-deployment
+  script:
+    - rancher-gitlab-deploy --environment production
+```
 
-rancher-agent:
-  cmd.run:
-    - name: rancher-agent-registration --url http://rancher:8080 --key <api-key> --secret <api-secret>
+`rancher-gitlab-deploy` will use the GitLab group and project name as the stack and service name by default. For example, the project:
 
-remove-rancher-agent-registration:
-  pip.removed:
-    - name: rancher-agent-registration
+`http://gitlab.example.com/acme/webservice`
+
+will upgrade the service called `webservice` in the stack called `acme`.
+
+If the names of your services don't match your repos in GitLab 1:1, you can change the service that gets upgraded with the `--stack` and `--service` flags:
+
+```
+deploy:
+  stage: deploy
+  image: cdrx/rancher-gitlab-deployment
+  script:
+    - rancher-gitlab-deploy --stack acmeinc --service website
+```
+
+You can change the image (or :tag) used to deploy the upgraded containers with the `--new-image` option:
+
+```
+deploy:
+  stage: deploy
+  image: cdrx/rancher-gitlab-deployment
+  script:
+    - rancher-gitlab-deploy --new-image registry.example.com/acme/widget:1.2
+```
+
+You may use this with the `$CI_BUILD_TAG` environment variable that GitLab sets.
+
+`rancher-gitlab-deploy`'s default upgrade strategy is to upgrade containers one at time, waiting 2s between each one. It will start new containers before shutting down existing ones. It will wait for the upgrade to complete in Rancher, then mark it as finished. The upgrade strategy can be adjusted with the flags in `--help` (see below).
+
+## GitLab CI Example
+
+Complete gitlab-ci.yml:
+
+```
+image: docker:latest
+services:
+  - docker:dind
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.example.com
+    - docker build -t registry.example.com/group/project .
+    - docker push registry.example.com/group/project
+
+deploy:
+  stage: deploy
+  image: cdrx/rancher-gitlab-deployment
+  script:
+    - rancher-gitlab-deploy
+```
+
+A more complex example:
+
+```
+deploy:
+  stage: deploy
+  image: cdrx/rancher-gitlab-deployment
+  script:
+    - rancher-gitlab-deploy --environment production --stack acme --service web --new-image alpine:3.4 --no-finish-upgrade
 ```
 
 ## Help
 
 ```
-$ rancher-agent-registration  --help
-Usage: rancher-agent-registration [OPTIONS]
+$ rancher-gitlab-deploy --help
 
-  Registers the current host with your Rancher server, creating the necessary
-  registration keys.
+Usage: rancher-gitlab-deploy [OPTIONS]
+
+  Performs an in service upgrade of the service specified on the command
+  line
 
 Options:
-  --url TEXT          The URL for your Rancher server, eg: http://rancher:8000
-  --key TEXT          The environment or account API key
-  --secret TEXT       The secret for the API key
-  --environment TEXT  The name of the environment to add the host into (if you
-                      have more than one)
-  --echo              Print the docker run command to the console, instead of
-                      running it
-  --sudo              Use sudo for docker run ...
-  --label TEXT        Apply a label to the host in Rancher in key=value format
-                      (you can use --label more than once for multiple labels)
-  --help              Show this message and exit.
+  --rancher-url TEXT              The URL for your Rancher server, eg:
+                                  http://rancher:8000  [required]
+  --rancher-key TEXT              The environment or account API key
+                                  [required]
+  --rancher-secret TEXT           The secret for the access API key
+                                  [required]
+  --environment TEXT              The name of the environment to add the host
+                                  into (only needed if you are using an
+                                  account API key instead of an environment
+                                  API key)
+  --stack TEXT                    The name of the stack in Rancher (defaults
+                                  to the name of the group in GitLab)
+                                  [required]
+  --service TEXT                  The name of the service in Rancher to
+                                  upgrade (defaults to the name of the service
+                                  in GitLab)  [required]
+  --start-before-stopping / --no-start-before-stopping
+                                  Should Rancher start new containers before
+                                  stopping the old ones?
+  --batch-size INTEGER            Number of containers to upgrade at once
+  --batch-interval INTEGER        Number of seconds to wait between upgrade
+                                  batches
+  --upgrade-timeout INTEGER       How long to wait, in seconds, for the
+                                  upgrade to finish before exiting. To skip
+                                  the wait, pass the --no-wait-for-upgrade-to-
+                                  finish option.
+  --wait-for-upgrade-to-finish / --no-wait-for-upgrade-to-finish
+                                  Wait for Rancher to finish the upgrade
+                                  before this tool exits
+  --new-image TEXT                If specified, replace the image (and :tag)
+                                  with this one during the upgrade
+  --finish-upgrade / --no-finish-upgrade
+                                  Mark the upgrade as finished after it
+                                  completes
+  --help                          Show this message and exit.
 
 ```
 
 ## History
 
-#### [1.0] - 2016-04-02
+#### [1.0] - 2016-09-14
 First release, works.
-
-#### [1.1] - 2016-09-02
-Added --label option to define host labels at registration, contributed by @mbrannigan
 
 ## License
 
