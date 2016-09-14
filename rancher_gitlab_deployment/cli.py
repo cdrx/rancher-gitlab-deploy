@@ -6,164 +6,226 @@ import json
 from time import sleep
 
 @click.command()
-@click.option('--url', prompt='Rancher server URL',
+@click.option('--rancher-url', envvar='RANCHER_URL', required=True,
               help='The URL for your Rancher server, eg: http://rancher:8000')
-@click.option('--key', prompt='API Key',
+@click.option('--rancher-key', envvar='RANCHER_ACCESS_KEY', required=True,
               help="The environment or account API key")
-@click.option('--secret', prompt='API Secret',
+@click.option('--rancher-secret', envvar='RANCHER_SECRET_KEY', required=True,
               help="The secret for the access API key")
 @click.option('--environment', default=None,
-              help="The name of the environment to add the host into")
-@click.option('--stack', default=None,
-              help="The name of the stack in Rancher")
-@click.option('--service', default=None,
-              help="The name of the service in Rancher to upgrade")
-def main(url, key, secret, environment, stack, service):
+              help="The name of the environment to add the host into " + \
+                   "(only needed if you are using an account API key instead of an environment API key)")
+@click.option('--stack', default=None, required=True,
+              help="The name of the stack in Rancher (defaults to the name of the group in GitLab)")
+@click.option('--service', default=None, required=True,
+              help="The name of the service in Rancher to upgrade (defaults to the name of the service in GitLab)")
+@click.option('--start-before-stopping/--no-start-before-stopping', default=True,
+              help="Should Rancher start new containers before stopping the old ones?")
+@click.option('--batch-size', default=1,
+              help="Number of containers to upgrade at once")
+@click.option('--batch-interval', default=2,
+              help="Number of seconds to wait between upgrade batches")
+@click.option('--upgrade-timeout', default=5*60,
+              help="How long to wait, in seconds, for the upgrade to finish before exiting. To skip the wait, pass the --no-wait-for-upgrade-to-finish option.")
+@click.option('--wait-for-upgrade-to-finish/--no-wait-for-upgrade-to-finish', default=True,
+              help="Wait for Rancher to finish the upgrade before this tool exits")
+@click.option('--new-image', default=None,
+              help="If specified, replace the image (and :tag) with this one during the upgrade")
+@click.option('--finish-upgrade/--no-finish-upgrade', default=True,
+              help="Mark the upgrade as finished after it completes")
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade):
     """Performs an in service upgrade of the service specified on the command line"""
     # split url to protocol and host
-    if "://" not in url:
+    if "://" not in rancher_url:
         bail("The Rancher URL doesn't look right")
 
-    proto, host = url.split("://")
-    api = "%s://%s:%s@%s/v1" % (proto, key, secret, host)
+    proto, host = rancher_url.split("://")
+    api = "%s://%s:%s@%s/v1" % (proto, rancher_key, rancher_secret, host)
+
+    # 1 -> Find the environment id in Rancher
 
     try:
         r = requests.get("%s/projects?limit=1000" % api)
         r.raise_for_status()
     except requests.exceptions.HTTPError:
-        bail("Couldn't connect to Rancher at %s - is the URL and API key right?" % host)
+        bail("Unable to connect to Rancher at %s - is the URL and API key right?" % host)
     else:
         environments = r.json()['data']
 
     if environment is None:
-        environment = environments[0]['id']
+        environment_id = environments[0]['id']
+        environment_name = environments[0]['name']
     else:
         for e in environments:
             if e['id'].lower() == environment.lower() or e['name'].lower() == environment.lower():
-                environment = e['id']
+                environment_id = e['id']
+                environment_name = environment[0]['name']
 
-    if not environment:
-        bail("Couldn't match your request to an environment on Rancher")
+    if not environment_id:
+        if environment:
+            bail("The '%s' environment doesn't exist in Rancher, or your API credentials don't have access to it" % environment)
+        else:
+            bail("No environment in Rancher matches your request")
+
+    # 2 -> Find the stack in the environment
 
     try:
         r = requests.get("%s/projects/%s/environments?limit=1000" % (
             api,
-            environment
+            environment_id
         ))
         r.raise_for_status()
     except requests.exceptions.HTTPError:
-        import traceback
-        traceback.print_exc()
-        bail("Couldn't fetch a list of stacks in the environment. Does your API key have the right permissions?")
+        bail("Unable to fetch a list of stacks in the environment '%s'" % environment_name)
     else:
         stacks = r.json()['data']
 
     for s in stacks:
-        if s['name'] == stack.lower():
-            stack = s['id']
+        if s['name'].lower() == stack.lower():
+            stack = s
             break
     else:
-        bail("Couldn't find a stack called '%s', does it exist in Rancher? Is it in the --envirionment specified?" % stack)
+        bail("Unable to find a stack called '%s'. Does it exist in the '%s' environment?" % environment_name)
+
+    # 3 -> Find the service in the stack
 
     try:
         r = requests.get("%s/projects/%s/environments/%s/services?limit=1000" % (
             api,
-            environment,
-            stack
+            environment_id,
+            stack['id']
         ))
         r.raise_for_status()
     except requests.exceptions.HTTPError:
-        bail("Couldn't fetch a list of services in the stack. Does your API key have the right permissions?")
+        bail("Unable to fetch a list of services in the stack. Does your API key have the right permissions?")
     else:
         services = r.json()['data']
 
     for s in services:
-        if s['name'] == service.lower():
+        if s['name'].lower() == service.lower():
             service = s
             break
     else:
-        bail("Couldn't find a service called '%s', does it exist in Rancher?" % stack)
+        bail("Unable to find a service called '%s', does it exist in Rancher?" % stack)
 
-    print environment
-    print stack
-    print service['id']
+    # 4 -> Is the service elligible for upgrade?
+
+    if service['state'] == 'upgraded':
+        warn("The current service state is 'upgraded', marking the previous upgrade as finished before starting a new upgrade...")
+
+        try:
+            r = requests.post("%s/projects/%s/services/%s/?action=finishupgrade" % (
+                api, environment_id, service['id']
+            ))
+            r.raise_for_status()
+        except requests.exceptions.HTTPError:
+            bail("Unable to finish the previous upgrade in Rancher")
+
+        attempts = 0
+        while service['state'] != "active":
+            sleep(2)
+            attempts += 2
+            if attempts > upgrade_timeout:
+                bail("A timeout occured while waiting for Rancher to finish the previous upgrade")
+            try:
+                r = requests.get("%s/projects/%s/services/%s" % (
+                    api, environment_id, service['id']
+                ))
+                r.raise_for_status()
+            except requests.exceptions.HTTPError:
+                bail("Unable to request the service status from the Rancher API")
+            else:
+                service = r.json()
+
+    if service['state'] != 'active':
+        bail("Unable to start upgrade: current service state '%s', but it needs to be 'active'" % service['state'])
+
+    msg("Upgrading %s/%s in environment %s..." % (stack['name'], service['name'], environment_name))
 
     upgrade = {'inServiceStrategy': {
-        'batchSize': 1,
-        'intervalMillis': 10000,
-        'startFirst': True,
+        'batchSize': batch_size,
+        'intervalMillis': batch_interval * 1000, # rancher expects miliseconds
+        'startFirst': start_before_stopping,
         'launchConfig': {},
         'secondaryLaunchConfigs': []
     }}
-
-    if service['state'] == 'upgraded':
-        bail("Mark the service as upgraded first")
-        # post(HOST + URL_SERVICE + service_id + "?action=finishupgrade", "")
-        # r = get(HOST + URL_SERVICE + service_id)
-        # current_service_config = r.json()
-        #
-        # sleep_count = 0
-        # while current_service_config['state'] != "active" and sleep_count < 60:
-        #     print "Waiting for upgrade to finish..."
-        #     time.sleep (2)
-        #     r = get(HOST + URL_SERVICE + service_id)
-        #     current_service_config = r.json()
-        #     sleep_count += 1
-
-    if service['state'] != 'active':
-        bail("The service can not be upgraded as it's current status (%s) is not: active" % service['state'])
-
     # copy over the existing config
     upgrade['inServiceStrategy']['launchConfig'] = service['launchConfig']
 
-    new_image = None
-    if new_image != None:
+    if new_image:
         # place new image into config
-        upgrade['inServiceStrategy']['launchConfig']['imageUuid'] = new_image
-    print json.dumps(upgrade)
+        upgrade['inServiceStrategy']['launchConfig']['imageUuid'] = 'docker:%s' % new_image
+
+    # 5 -> Start the upgrade
+
     try:
         r = requests.post("%s/projects/%s/services/%s/?action=upgrade" % (
-            api,
-            environment,
-            service['id']
-        ), upgrade)
+            api, environment_id, service['id']
+        ), json=upgrade)
         r.raise_for_status()
     except requests.exceptions.HTTPError:
-        import traceback
-        traceback.print_exc()
-        bail("Couldn't request upgrade on Rancher")
+        bail("Unable to request an upgrade on Rancher")
+
+    # 6 -> Wait for the upgrade to finish
+
+    if not wait_for_upgrade_to_finish:
+        msg("Upgrade started")
     else:
-        services = r.json()['data']
+        msg("Upgrade started, waiting for upgrade to complete...")
+        attempts = 0
+        while service['state'] != "upgraded":
+            sleep(2)
+            attempts += 2
+            if attempts > upgrade_timeout:
+                bail("A timeout occured while waiting for Rancher to complete the upgrade")
+            try:
+                r = requests.get("%s/projects/%s/services/%s" % (
+                    api, environment_id, service['id']
+                ))
+                r.raise_for_status()
+            except requests.exceptions.HTTPError:
+                bail("Unable to fetch the service status from the Rancher API")
+            else:
+                service = r.json()
 
-    try:
-        r = requests.get("%s/projects/%s/services/%s" % (
-            api,
-            environment,
-            service['id']
-        ))
-        r.raise_for_status()
-    except requests.exceptions.HTTPError:
-        bail("Couldn't fetch a list of services in the stack. Does your API key have the right permissions?")
-    else:
-        service = r.json()
+        if not finish_upgrade:
+            msg("Service upgraded")
+            sys.exit(0)
+        else:
+            msg("Finishing upgrade...")
+            try:
+                r = requests.post("%s/projects/%s/services/%s/?action=finishupgrade" % (
+                    api, environment_id, service['id']
+                ))
+                r.raise_for_status()
+            except requests.exceptions.HTTPError:
+                bail("Unable to finish the upgrade in Rancher")
 
-    print "Waiting for upgrade to finish..."
-    sleep_count = 0
-    while service['state'] != "upgraded" and sleep_count < 60:
-        print "."
-        time.sleep (2)
-        r = requests.get("%s/projects/%s/services/%s" % (
-            api,
-            environment,
-            service['id']
-        ))
-        service = r.json()
-        sleep_count += 1
+            attempts = 0
+            while service['state'] != "active":
+                sleep(2)
+                attempts += 2
+                if attempts > upgrade_timeout:
+                    bail("A timeout occured while waiting for Rancher to finish the previous upgrade")
+                try:
+                    r = requests.get("%s/projects/%s/services/%s" % (
+                        api, environment_id, service['id']
+                    ))
+                    r.raise_for_status()
+                except requests.exceptions.HTTPError:
+                    bail("Unable to request the service status from the Rancher API")
+                else:
+                    service = r.json()
 
-    print "Upgraded"
+            msg("Upgrade finished")
+
+    sys.exit(0)
 
 def msg(msg):
     click.echo(click.style(msg, fg='green'))
+
+def warn(msg):
+    click.echo(click.style(msg, fg='yellow'))
 
 def bail(msg):
     click.echo(click.style('Error: ' + msg, fg='red'))
