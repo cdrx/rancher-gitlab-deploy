@@ -1,6 +1,8 @@
 # Rancher GitLab Deployment Tool
 
-**rancher-gitlab-deployment** is a tool for deploying containers built with GitLab CI onto your Rancher infrastructure. It fits neatly into the `gitlab-ci.yml` workflow and requires minimal configuration. It will upgrade existing services as part of your CI workflow.
+**rancher-gitlab-deploy** is a tool for deploying containers built with GitLab CI onto your Rancher infrastructure.
+
+It fits neatly into the `gitlab-ci.yml` workflow and requires minimal configuration. It will upgrade existing services as part of your CI workflow.
 
 Both GitLab's built in Docker registry and external Docker registries are supported.
 
@@ -12,12 +14,12 @@ This tool is not suitable if your services are not already created in Rancher. I
 
 I recommend you use the pre-built container:
 
-https://hub.docker.com/r/cdrx/rancher-gitlab-deployment/
+https://hub.docker.com/r/cdrx/rancher-gitlab-deploy/
 
 But you can install the command locally, with `pip`, if you prefer:
 
 ```
-pip install rancher-gitlab-deployment
+pip install rancher-gitlab-deploy
 ```
 
 ## Usage
@@ -35,9 +37,9 @@ Rancher supports two kind of API keys: environment and account. You can use eith
 ```
 deploy:
   stage: deploy
-  image: cdrx/rancher-gitlab-deployment
+  image: cdrx/rancher-gitlab-deploy
   script:
-    - rancher-gitlab-deploy --environment production
+    - deploy --environment production
 ```
 
 `rancher-gitlab-deploy` will use the GitLab group and project name as the stack and service name by default. For example, the project:
@@ -51,9 +53,9 @@ If the names of your services don't match your repos in GitLab 1:1, you can chan
 ```
 deploy:
   stage: deploy
-  image: cdrx/rancher-gitlab-deployment
+  image: cdrx/rancher-gitlab-deploy
   script:
-    - rancher-gitlab-deploy --stack acmeinc --service website
+    - deploy --stack acmeinc --service website
 ```
 
 You can change the image (or :tag) used to deploy the upgraded containers with the `--new-image` option:
@@ -61,9 +63,9 @@ You can change the image (or :tag) used to deploy the upgraded containers with t
 ```
 deploy:
   stage: deploy
-  image: cdrx/rancher-gitlab-deployment
+  image: cdrx/rancher-gitlab-deploy
   script:
-    - rancher-gitlab-deploy --new-image registry.example.com/acme/widget:1.2
+    - deploy --new-image registry.example.com/acme/widget:1.2
 ```
 
 You may use this with the `$CI_BUILD_TAG` environment variable that GitLab sets.
@@ -92,9 +94,9 @@ build:
 
 deploy:
   stage: deploy
-  image: cdrx/rancher-gitlab-deployment
+  image: cdrx/rancher-gitlab-deploy
   script:
-    - rancher-gitlab-deploy
+    - deploy
 ```
 
 A more complex example:
@@ -102,9 +104,9 @@ A more complex example:
 ```
 deploy:
   stage: deploy
-  image: cdrx/rancher-gitlab-deployment
+  image: cdrx/rancher-gitlab-deploy
   script:
-    - rancher-gitlab-deploy --environment production --stack acme --service web --new-image alpine:3.4 --no-finish-upgrade
+    - deploy --environment production --stack acme --service web --new-image alpine:3.4 --no-finish-upgrade
 ```
 
 ## Help
