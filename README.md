@@ -41,7 +41,7 @@ deploy:
   stage: deploy
   image: cdrx/rancher-gitlab-deploy
   script:
-    - deploy --environment production
+    - upgrade --environment production
 ```
 
 `rancher-gitlab-deploy` will use the GitLab group and project name as the stack and service name by default. For example, the project:
@@ -57,7 +57,7 @@ deploy:
   stage: deploy
   image: cdrx/rancher-gitlab-deploy
   script:
-    - deploy --stack acmeinc --service website
+    - upgrade --stack acmeinc --service website
 ```
 
 You can change the image (or :tag) used to deploy the upgraded containers with the `--new-image` option:
@@ -67,7 +67,7 @@ deploy:
   stage: deploy
   image: cdrx/rancher-gitlab-deploy
   script:
-    - deploy --new-image registry.example.com/acme/widget:1.2
+    - upgrade --new-image registry.example.com/acme/widget:1.2
 ```
 
 You may use this with the `$CI_BUILD_TAG` environment variable that GitLab sets.
@@ -98,7 +98,7 @@ deploy:
   stage: deploy
   image: cdrx/rancher-gitlab-deploy
   script:
-    - deploy
+    - upgrade
 ```
 
 A more complex example:
@@ -108,7 +108,7 @@ deploy:
   stage: deploy
   image: cdrx/rancher-gitlab-deploy
   script:
-    - deploy --environment production --stack acme --service web --new-image alpine:3.4 --no-finish-upgrade
+    - upgrade --environment production --stack acme --service web --new-image alpine:3.4 --no-finish-upgrade
 ```
 
 ## Help
