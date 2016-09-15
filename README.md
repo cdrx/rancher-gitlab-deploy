@@ -29,6 +29,7 @@ You will need to create a set of API keys in Rancher and save them as secret var
 Three secret variables are required:
 
 `RANCHER_URL` (eg `https://rancher.example.com`)
+`RANCHER_ACCESS_KEY`
 `RANCHER_SECRET_KEY`
 
 Rancher supports two kind of API keys: environment and account. You can use either with this tool, but if your account key has access to more than one environment you'll need to specify the name of the environment with the --environment flag. This is so that the tool can upgrade find the service in the right place. For example, in your `gitlab-ci.yml`:
