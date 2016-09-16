@@ -106,7 +106,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             service = s
             break
     else:
-        bail("Unable to find a service called '%s', does it exist in Rancher?" % stack)
+        bail("Unable to find a service called '%s', does it exist in Rancher?" % service)
 
     # 4 -> Is the service elligible for upgrade?
 
