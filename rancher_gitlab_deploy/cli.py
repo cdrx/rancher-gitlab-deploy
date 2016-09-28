@@ -59,7 +59,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         for e in environments:
             if e['id'].lower() == environment.lower() or e['name'].lower() == environment.lower():
                 environment_id = e['id']
-                environment_name = environment[0]['name']
+                environment_name = e['name']
 
     if not environment_id:
         if environment:
