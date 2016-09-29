@@ -165,6 +165,9 @@ Options:
 #### [1.0] - 2016-09-14
 First release, works.
 
+#### [1.1] - 2016-09-29
+Fixed a bug that caused a crash when using --environment, thank you @mvriel for the PR
+
 ## License
 
 MIT
