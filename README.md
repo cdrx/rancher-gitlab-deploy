@@ -135,6 +135,8 @@ Options:
   --stack TEXT                    The name of the stack in Rancher (defaults
                                   to the name of the group in GitLab)
                                   [required]
+  --sidekicks/--no-sidekicks      Upgrade sidekicks at the same time? Defaults 
+                                  to not upgrading sidekicks 
   --service TEXT                  The name of the service in Rancher to
                                   upgrade (defaults to the name of the service
                                   in GitLab)  [required]
