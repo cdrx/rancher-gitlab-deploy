@@ -33,7 +33,9 @@ from time import sleep
               help="If specified, replace the image (and :tag) with this one during the upgrade")
 @click.option('--finish-upgrade/--no-finish-upgrade', default=True,
               help="Mark the upgrade as finished after it completes")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade):
+@click.option('--sidekicks/--no-sidekicks', default=False,
+              help="Upgrade also service sidekicks")
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks):
     """Performs an in service upgrade of the service specified on the command line"""
     # split url to protocol and host
     if "://" not in rancher_url:
@@ -151,6 +153,10 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     }}
     # copy over the existing config
     upgrade['inServiceStrategy']['launchConfig'] = service['launchConfig']
+
+    if sidekicks:
+        # copy over existing sidekicks config
+        upgrade['inServiceStrategy']['secondaryLaunchConfigs'] = service['secondaryLaunchConfigs']
 
     if new_image:
         # place new image into config
