@@ -170,6 +170,9 @@ First release, works.
 #### [1.1] - 2016-09-29
 Fixed a bug that caused a crash when using --environment, thank you @mvriel for the PR
 
+#### [1.2] - 2017-01-03
+Added the --sidekicks flag to upgrade sidekicks at the same time, thank you @kiesiu for the PR
+
 ## License
 
 MIT
