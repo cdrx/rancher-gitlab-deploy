@@ -135,8 +135,11 @@ Options:
   --stack TEXT                    The name of the stack in Rancher (defaults
                                   to the name of the group in GitLab)
                                   [required]
-  --sidekicks/--no-sidekicks      Upgrade sidekicks at the same time? Defaults 
-                                  to not upgrading sidekicks 
+  --sidekicks/--no-sidekicks      Upgrade service sidekicks at the same time?
+                                  Defaults to not upgrading sidekicks
+  --new-sidekick-image NAME IMAGE If specified, replace the named sidekick image
+                                  (and :tag) with this one during the upgrade.
+                                  This flag can be used more than once.
   --service TEXT                  The name of the service in Rancher to
                                   upgrade (defaults to the name of the service
                                   in GitLab)  [required]
@@ -172,6 +175,9 @@ Fixed a bug that caused a crash when using --environment, thank you @mvriel for 
 
 #### [1.2] - 2017-01-03
 Added the --sidekicks flag to upgrade sidekicks at the same time, thank you @kiesiu for the PR
+
+#### [1.3] - 2017-03-16
+Added the --new-sidekick-image flag to change sidekick images while upgrading, thank you @kariae for the PR
 
 ## License
 

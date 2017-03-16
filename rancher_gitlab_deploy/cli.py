@@ -34,9 +34,9 @@ from time import sleep
 @click.option('--finish-upgrade/--no-finish-upgrade', default=True,
               help="Mark the upgrade as finished after it completes")
 @click.option('--sidekicks/--no-sidekicks', default=False,
-              help="Upgrade also service sidekicks")
+              help="Upgrade service sidekicks at the same time")
 @click.option('--new-sidekick-image', default=None, multiple=True,
-              help="If specified, replace the image (and :tag) with this one during the upgrade", type=(str, str))
+              help="If specified, replace the sidekick image (and :tag) with this one during the upgrade", type=(str, str))
 def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image):
     """Performs an in service upgrade of the service specified on the command line"""
     # split url to protocol and host
@@ -167,7 +167,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
 
     if new_sidekick_image:
         new_sidekick_image = dict(new_sidekick_image)
-        
+
         for idx, secondaryLaunchConfigs in enumerate(service['secondaryLaunchConfigs']):
             if secondaryLaunchConfigs['name'] in new_sidekick_image:
                 upgrade['inServiceStrategy']['secondaryLaunchConfigs'][idx]['imageUuid'] = 'docker:%s' % new_sidekick_image[secondaryLaunchConfigs['name']]
