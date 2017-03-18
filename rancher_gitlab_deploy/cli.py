@@ -56,6 +56,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     else:
         environments = r.json()['data']
 
+    environment_id = None
     if environment is None:
         environment_id = environments[0]['id']
         environment_name = environments[0]['name']
