@@ -1,8 +1,15 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import os, sys, subprocess
 import click
 import requests
 import json
+import logging
+import contextlib
+try:
+    from http.client import HTTPConnection # py3
+except ImportError:
+    from httplib import HTTPConnection # py2
+
 from time import sleep
 
 @click.command()
@@ -37,8 +44,14 @@ from time import sleep
               help="Upgrade service sidekicks at the same time")
 @click.option('--new-sidekick-image', default=None, multiple=True,
               help="If specified, replace the sidekick image (and :tag) with this one during the upgrade", type=(str, str))
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image):
+@click.option('--debug/--no-debug', default=False,
+              help="Enable HTTP Debugging")
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, debug):
     """Performs an in service upgrade of the service specified on the command line"""
+
+    if debug:
+        debug_requests_on()
+
     # split url to protocol and host
     if "://" not in rancher_url:
         bail("The Rancher URL doesn't look right")
@@ -247,3 +260,13 @@ def warn(msg):
 def bail(msg):
     click.echo(click.style('Error: ' + msg, fg='red'))
     sys.exit(1)
+
+def debug_requests_on():
+    '''Switches on logging of the requests module.'''
+    HTTPConnection.debuglevel = 1
+
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
+    requests_log = logging.getLogger("requests.packages.urllib3")
+    requests_log.setLevel(logging.DEBUG)
+    requests_log.propagate = True
