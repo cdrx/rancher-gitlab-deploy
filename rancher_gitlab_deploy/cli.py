@@ -103,7 +103,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             stack = s
             break
     else:
-        bail("Unable to find a stack called '%s'. Does it exist in the '%s' environment?" % environment_name)
+        bail("Unable to find a stack called '%s'. Does it exist in the '%s' environment?" % (stack, environment_name))
 
     # 3 -> Find the service in the stack
 
