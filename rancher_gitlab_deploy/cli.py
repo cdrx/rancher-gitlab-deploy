@@ -169,7 +169,6 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     }}
     # copy over the existing config
     upgrade['inServiceStrategy']['launchConfig'] = service['launchConfig']
-    upgrade['inServiceStrategy']['secondaryLaunchConfigs'] = service['secondaryLaunchConfigs']
 
     if sidekicks:
         # copy over existing sidekicks config
