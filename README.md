@@ -72,7 +72,7 @@ deploy:
 
 You may use this with the `$CI_BUILD_TAG` environment variable that GitLab sets.
 
-`rancher-gitlab-deploy`'s default upgrade strategy is to upgrade containers one at time, waiting 2s between each one. It will start new containers before shutting down existing ones. It will wait for the upgrade to complete in Rancher, then mark it as finished. The upgrade strategy can be adjusted with the flags in `--help` (see below).
+`rancher-gitlab-deploy`'s default upgrade strategy is to upgrade containers one at time, waiting 2s between each one. It will start new containers after shutting down existing ones, to avoid issues with multiple containers trying to bind to the same port on a host. It will wait for the upgrade to complete in Rancher, then mark it as finished. The upgrade strategy can be adjusted with the flags in `--help` (see below).
 
 ## GitLab CI Example
 
@@ -178,6 +178,9 @@ Added the --sidekicks flag to upgrade sidekicks at the same time, thank you @kie
 
 #### [1.3] - 2017-03-16
 Added the --new-sidekick-image flag to change sidekick images while upgrading, thank you @kariae for the PR
+
+#### [1.4] - 2017-07-18
+Fixed some bug to do with error and sidekick handling and made `--no-start-before-stopping` the default behaviour
 
 ## License
 

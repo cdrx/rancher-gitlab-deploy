@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='rancher-gitlab-deploy',
-    version='1.2',
+    version='1.4',
     description='Command line tool to ease updating services in Rancher from your GitLab CI pipeline',
     url='https://github.com/cdrx/rancher-gitlab-deploy',
     author='cdrx',
