@@ -26,7 +26,7 @@ from time import sleep
               help="The name of the stack in Rancher (defaults to the name of the group in GitLab)")
 @click.option('--service', envvar='CI_PROJECT_NAME', default=None, required=True,
               help="The name of the service in Rancher to upgrade (defaults to the name of the service in GitLab)")
-@click.option('--start-before-stopping/--no-start-before-stopping', default=True,
+@click.option('--start-before-stopping/--no-start-before-stopping', default=False,
               help="Should Rancher start new containers before stopping the old ones?")
 @click.option('--batch-size', default=1,
               help="Number of containers to upgrade at once")
