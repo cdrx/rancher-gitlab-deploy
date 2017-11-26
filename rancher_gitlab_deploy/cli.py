@@ -57,12 +57,16 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         bail("The Rancher URL doesn't look right")
 
     proto, host = rancher_url.split("://")
-    api = "%s://%s:%s@%s/v1" % (proto, rancher_key, rancher_secret, host)
+    api = "%s://%s/v1" % (proto, host)
+
+    # 0 -> Authenticate all future requests
+    session = requests.Session()
+    session.auth = (rancher_key, rancher_secret)
 
     # 1 -> Find the environment id in Rancher
 
     try:
-        r = requests.get("%s/projects?limit=1000" % api)
+        r = session.get("%s/projects?limit=1000" % api)
         r.raise_for_status()
     except requests.exceptions.HTTPError:
         bail("Unable to connect to Rancher at %s - is the URL and API key right?" % host)
@@ -88,7 +92,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     # 2 -> Find the stack in the environment
 
     try:
-        r = requests.get("%s/projects/%s/environments?limit=1000" % (
+        r = session.get("%s/projects/%s/environments?limit=1000" % (
             api,
             environment_id
         ))
@@ -99,6 +103,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         stacks = r.json()['data']
 
     for s in stacks:
+        
         if s['name'].lower() == stack.lower():
             stack = s
             break
@@ -108,7 +113,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     # 3 -> Find the service in the stack
 
     try:
-        r = requests.get("%s/projects/%s/environments/%s/services?limit=1000" % (
+        r = session.get("%s/projects/%s/environments/%s/services?limit=1000" % (
             api,
             environment_id,
             stack['id']
@@ -132,7 +137,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         warn("The current service state is 'upgraded', marking the previous upgrade as finished before starting a new upgrade...")
 
         try:
-            r = requests.post("%s/projects/%s/services/%s/?action=finishupgrade" % (
+            r = session.post("%s/projects/%s/services/%s/?action=finishupgrade" % (
                 api, environment_id, service['id']
             ))
             r.raise_for_status()
@@ -146,7 +151,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             if attempts > upgrade_timeout:
                 bail("A timeout occured while waiting for Rancher to finish the previous upgrade")
             try:
-                r = requests.get("%s/projects/%s/services/%s" % (
+                r = session.get("%s/projects/%s/services/%s" % (
                     api, environment_id, service['id']
                 ))
                 r.raise_for_status()
@@ -188,7 +193,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     # 5 -> Start the upgrade
 
     try:
-        r = requests.post("%s/projects/%s/services/%s/?action=upgrade" % (
+        r = session.post("%s/projects/%s/services/%s/?action=upgrade" % (
             api, environment_id, service['id']
         ), json=upgrade)
         r.raise_for_status()
@@ -208,7 +213,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             if attempts > upgrade_timeout:
                 bail("A timeout occured while waiting for Rancher to complete the upgrade")
             try:
-                r = requests.get("%s/projects/%s/services/%s" % (
+                r = session.get("%s/projects/%s/services/%s" % (
                     api, environment_id, service['id']
                 ))
                 r.raise_for_status()
@@ -223,7 +228,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         else:
             msg("Finishing upgrade...")
             try:
-                r = requests.post("%s/projects/%s/services/%s/?action=finishupgrade" % (
+                r = session.post("%s/projects/%s/services/%s/?action=finishupgrade" % (
                     api, environment_id, service['id']
                 ))
                 r.raise_for_status()
@@ -237,7 +242,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                 if attempts > upgrade_timeout:
                     bail("A timeout occured while waiting for Rancher to finish the previous upgrade")
                 try:
-                    r = requests.get("%s/projects/%s/services/%s" % (
+                    r = session.get("%s/projects/%s/services/%s" % (
                         api, environment_id, service['id']
                     ))
                     r.raise_for_status()
