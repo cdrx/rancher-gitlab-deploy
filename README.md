@@ -167,20 +167,23 @@ Options:
 
 ## History
 
-#### [1.0] - 2016-09-14
-First release, works.
+#### [1.5] - 2017-11-25
+Fixed UnicodeError bug with authentication, thank you to @evilmind for the fix
 
-#### [1.1] - 2016-09-29
-Fixed a bug that caused a crash when using --environment, thank you @mvriel for the PR
-
-#### [1.2] - 2017-01-03
-Added the --sidekicks flag to upgrade sidekicks at the same time, thank you @kiesiu for the PR
+#### [1.4] - 2017-07-18
+Fixed some bug to do with error and sidekick handling and made `--no-start-before-stopping` the default behaviour
 
 #### [1.3] - 2017-03-16
 Added the --new-sidekick-image flag to change sidekick images while upgrading, thank you @kariae for the PR
 
-#### [1.4] - 2017-07-18
-Fixed some bug to do with error and sidekick handling and made `--no-start-before-stopping` the default behaviour
+#### [1.2] - 2017-01-03
+Added the --sidekicks flag to upgrade sidekicks at the same time, thank you @kiesiu for the PR
+
+#### [1.1] - 2016-09-29
+Fixed a bug that caused a crash when using --environment, thank you @mvriel for the PR
+
+#### [1.0] - 2016-09-14
+First release, works.
 
 ## License
 
