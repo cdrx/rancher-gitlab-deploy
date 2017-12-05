@@ -175,7 +175,8 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     # copy over the existing config
     upgrade['inServiceStrategy']['launchConfig'] = service['launchConfig']
 
-    if sidekicks:
+    # new_sidekick_image parameter needs secondaryLaunchConfigs loaded
+    if sidekicks or new_sidekick_image:
         # copy over existing sidekicks config
         upgrade['inServiceStrategy']['secondaryLaunchConfigs'] = service['secondaryLaunchConfigs']
 
