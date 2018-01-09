@@ -44,11 +44,13 @@ from time import sleep
               help="Upgrade service sidekicks at the same time")
 @click.option('--new-sidekick-image', default=None, multiple=True,
               help="If specified, replace the sidekick image (and :tag) with this one during the upgrade", type=(str, str))
+@click.option('--create/--no-create', default=False,
+              help="If specified, create Rancher stack and service if they don't exist")
 @click.option('--debug/--no-debug', default=False,
               help="Enable HTTP Debugging")
 @click.option('--ssl-verify/--no-ssl-verify', default=True,
               help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, debug, ssl_verify):
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, debug, ssl_verify):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -113,7 +115,22 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             stack = s
             break
     else:
-        bail("Unable to find a stack called '%s'. Does it exist in the '%s' environment?" % (stack, environment_name))
+        if create:
+            new_stack = {
+                'name': stack.lower()
+            }
+            try:
+                msg("Creating stack %s in environment %s..." % (new_stack['name'], environment_name))
+                r = session.post("%s/projects/%s/environments" % (
+                    api,
+                    environment_id
+                ), json=new_stack)
+                r.raise_for_status()
+                stack = r.json()
+            except requests.exceptions.HTTPError:
+                bail("Unable to create missing stack")
+        else:
+            bail("Unable to find a stack called '%s'. Does it exist in the '%s' environment?" % (stack, environment_name))
 
     # 3 -> Find the service in the stack
 
@@ -134,7 +151,31 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             service = s
             break
     else:
-        bail("Unable to find a service called '%s', does it exist in Rancher?" % service)
+        if create:
+            new_service = {
+                'name': service.lower(),
+                'stackId': stack['id'],
+                'startOnCreate': True,
+                'launchConfig': {
+                    'imageUuid': ("docker:%s" % new_image)
+                }
+            }
+            try:
+                msg("Creating service %s in environment %s with image %s..." % (
+                    new_service['name'], environment_name, new_image
+                ))
+                r = session.post("%s/projects/%s/services" % (
+                    api,
+                    environment_id
+                ), json=new_service)
+                r.raise_for_status()
+                service = r.json()
+                msg("Creation finished")
+                sys.exit(0)
+            except requests.exceptions.HTTPError:
+                bail("Unable to create missing service")
+        else:
+            bail("Unable to find a service called '%s', does it exist in Rancher?" % service)
 
     # 4 -> Is the service elligible for upgrade?
 

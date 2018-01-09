@@ -164,6 +164,9 @@ Options:
   --ssl-verify / --no-ssl-verify  Whether we should skip certificate checks
                                   or not when connecting to the Rancher API.
                                   Default behaviour is to check cert validity.
+  --create / --no-create          Will create the Rancher stack
+                                  and service, if they are missed
+                                  (needs --new-image option)
   --help                          Show this message and exit.
 
 ```
