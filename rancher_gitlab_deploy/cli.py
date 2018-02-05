@@ -57,6 +57,10 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     # split url to protocol and host
     if "://" not in rancher_url:
         bail("The Rancher URL doesn't look right")
+    elif "v1" in rancher_url:
+        bail("The Rancher URL should only contain the host")
+    elif "v2" in rancher_url:
+        bail("The Rancher API v2 is not supported")
 
     proto, host = rancher_url.split("://")
     api = "%s://%s/v1" % (proto, host)
