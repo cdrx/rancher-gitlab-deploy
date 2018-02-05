@@ -161,6 +161,9 @@ Options:
   --finish-upgrade / --no-finish-upgrade
                                   Mark the upgrade as finished after it
                                   completes
+  --ssl-verify / --no-ssl-verify  Whether we should skip certificate checks
+                                  or not when connecting to the Rancher API.
+                                  Default behaviour is to check cert validity.
   --help                          Show this message and exit.
 
 ```
