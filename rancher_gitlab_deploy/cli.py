@@ -46,7 +46,9 @@ from time import sleep
               help="If specified, replace the sidekick image (and :tag) with this one during the upgrade", type=(str, str))
 @click.option('--debug/--no-debug', default=False,
               help="Enable HTTP Debugging")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, debug):
+@click.option('--ssl-verify/--no-ssl-verify', default=True,
+              help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, debug, ssl_verify):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -59,12 +61,15 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     proto, host = rancher_url.split("://")
     api = "%s://%s/v1" % (proto, host)
 
-    # 0 -> Authenticate all future requests
     session = requests.Session()
+
+    # Set verify based on --ssl-verify/--no-ssl-verify option
+    session.verify = ssl_verify
+    
+    # 0 -> Authenticate all future requests
     session.auth = (rancher_key, rancher_secret)
 
     # 1 -> Find the environment id in Rancher
-
     try:
         r = session.get("%s/projects?limit=1000" % api)
         r.raise_for_status()
