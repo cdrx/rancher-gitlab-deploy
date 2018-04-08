@@ -170,9 +170,9 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             if hostname:
                 msg('Deploy using hostname %s' % (hostname))
                 new_service['launchConfig'].get('labels', {})['rap.host'] = hostname
-            if port:
-                msg('Forward incoming request to port %s' % (port))
-                new_service['launchConfig'].get('labels', {})['rap.port'] = port
+                if port:
+                    msg('Forward incoming request to port %s' % (port))
+                    new_service['launchConfig'].get('labels', {})['rap.port'] = port
             try:
                 msg("Creating service %s in environment %s with image %s..." % (
                     new_service['name'], environment_name, new_image
@@ -251,9 +251,9 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     if hostname:
         msg('Deploy using hostname %s' % (hostname))
         upgrade['inServiceStrategy']['launchConfig'].get('labels', {})['rap.host'] = hostname
-    if port:
-        msg('Forward incoming request to port %s' % (port))
-        upgrade['inServiceStrategy']['launchConfig'].get('labels', {})['rap.port'] = port
+        if port:
+            msg('Forward incoming request to port %s' % (port))
+            upgrade['inServiceStrategy']['launchConfig'].get('labels', {})['rap.port'] = port
     # 5 -> Start the upgrade
 
     try:
