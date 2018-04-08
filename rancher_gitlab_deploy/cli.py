@@ -164,16 +164,15 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                 'stackId': stack['id'],
                 'startOnCreate': True,
                 'launchConfig': {
-                    'imageUuid': ("docker:%s" % new_image),
-                    'labels': {}
+                    'imageUuid': ("docker:%s" % new_image)
                 }
             }
             if hostname:
                 msg('Deploy using hostname %s' % (hostname))
-                new_service['launchConfig']['labels']['rap.host'] = hostname
+                new_service['launchConfig'].get('labels', {})['rap.host'] = hostname
             if port:
                 msg('Forward incoming request to port %s' % (port))
-                new_service['launchConfig']['labels']['rap.port'] = port
+                new_service['launchConfig'].get('labels', {})['rap.port'] = port
             try:
                 msg("Creating service %s in environment %s with image %s..." % (
                     new_service['name'], environment_name, new_image
@@ -251,10 +250,10 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                 upgrade['inServiceStrategy']['secondaryLaunchConfigs'][idx]['imageUuid'] = 'docker:%s' % new_sidekick_image[secondaryLaunchConfigs['name']]
     if hostname:
         msg('Deploy using hostname %s' % (hostname))
-        upgrade['inServiceStrategy']['launchConfig']['labels']['rap.host'] = hostname
+        upgrade['inServiceStrategy']['launchConfig'].get('labels', {})['rap.host'] = hostname
     if port:
         msg('Forward incoming request to port %s' % (port))
-        upgrade['inServiceStrategy']['launchConfig']['labels']['rap.port'] = port
+        upgrade['inServiceStrategy']['launchConfig'].get('labels', {})['rap.port'] = port
     # 5 -> Start the upgrade
 
     try:
