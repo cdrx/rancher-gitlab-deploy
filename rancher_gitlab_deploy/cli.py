@@ -50,7 +50,9 @@ from time import sleep
               help="Enable HTTP Debugging")
 @click.option('--ssl-verify/--no-ssl-verify', default=True,
               help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, debug, ssl_verify):
+@click.option('--hostname',default=None,
+              help="Deploy hostname")
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, debug, ssl_verify, hostname):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -237,7 +239,9 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         for idx, secondaryLaunchConfigs in enumerate(service['secondaryLaunchConfigs']):
             if secondaryLaunchConfigs['name'] in new_sidekick_image:
                 upgrade['inServiceStrategy']['secondaryLaunchConfigs'][idx]['imageUuid'] = 'docker:%s' % new_sidekick_image[secondaryLaunchConfigs['name']]
-
+    if hostname:
+        msg('Deploy using hostname %s', hostname)
+        upgrade['inServiceStrategy']['launchConfig']['labels']['rap.host'] = hostname
     # 5 -> Start the upgrade
 
     try:
