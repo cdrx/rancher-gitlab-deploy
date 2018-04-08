@@ -52,7 +52,10 @@ from time import sleep
               help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
 @click.option('--hostname',default=None,
               help="Deploy hostname")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, debug, ssl_verify, hostname):
+@click.option('--port',default='3000',
+              help="Applicate port to forward to")
+
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, debug, ssl_verify, hostname, port):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -242,6 +245,9 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     if hostname:
         msg('Deploy using hostname %s', hostname)
         upgrade['inServiceStrategy']['launchConfig']['labels']['rap.host'] = hostname
+    if port:
+        msg('Forward incoming request to port %s', port)
+        upgrade['inServiceStrategy']['launchConfig']['labels']['rap.port'] = port
     # 5 -> Start the upgrade
 
     try:
