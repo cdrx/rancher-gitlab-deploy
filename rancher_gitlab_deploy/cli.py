@@ -164,9 +164,16 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                 'stackId': stack['id'],
                 'startOnCreate': True,
                 'launchConfig': {
-                    'imageUuid': ("docker:%s" % new_image)
+                    'imageUuid': ("docker:%s" % new_image),
+                    'labels': {}
                 }
             }
+            if hostname:
+                msg('Deploy using hostname %s' % (hostname))
+                new_service['launchConfig']['labels']['rap.host'] = hostname
+            if port:
+                msg('Forward incoming request to port %s' % (port))
+                new_service['launchConfig']['labels']['rap.port'] = port
             try:
                 msg("Creating service %s in environment %s with image %s..." % (
                     new_service['name'], environment_name, new_image
