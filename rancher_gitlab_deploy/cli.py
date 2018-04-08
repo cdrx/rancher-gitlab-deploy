@@ -243,10 +243,10 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             if secondaryLaunchConfigs['name'] in new_sidekick_image:
                 upgrade['inServiceStrategy']['secondaryLaunchConfigs'][idx]['imageUuid'] = 'docker:%s' % new_sidekick_image[secondaryLaunchConfigs['name']]
     if hostname:
-        msg('Deploy using hostname %s', hostname)
+        msg('Deploy using hostname %s' % (hostname))
         upgrade['inServiceStrategy']['launchConfig']['labels']['rap.host'] = hostname
     if port:
-        msg('Forward incoming request to port %s', port)
+        msg('Forward incoming request to port %s' % (port))
         upgrade['inServiceStrategy']['launchConfig']['labels']['rap.port'] = port
     # 5 -> Start the upgrade
 
