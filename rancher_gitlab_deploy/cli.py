@@ -171,7 +171,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                 msg('Deploy using hostname %s' % (hostname))
                 labels = new_service['launchConfig'].get('labels', {})
                 labels['rap.host'] = hostname
-                new_service['launchConfig']['labels'] = labels
+                labels['rap.le_host'] = hostname
                 if port:
                     msg('Forward incoming request to port %s' % (port))
                     labels['rap.port'] = port
@@ -255,6 +255,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         msg('Deploy using hostname %s' % (hostname))
         labels = upgrade['inServiceStrategy']['launchConfig'].get('labels', {})
         labels['rap.host'] = hostname
+        labels['rap.le_host'] = hostname
         if port:
             msg('Forward incoming request to port %s' % (port))
             labels['rap.port'] = port
