@@ -6,7 +6,11 @@ setup(name='rancher-gitlab-deploy',
     url='https://github.com/cdrx/rancher-gitlab-deploy',
     author='cdrx',
     license='MIT',
-    packages=['rancher_gitlab_deploy'],
+    packages=[
+        'rancher_gitlab_deploy_upgrade',
+        'rancher_gitlab_deploy_finish_upgrade',
+        'rancher_gitlab_deploy_rollback'
+    ],
     zip_safe=False,
     install_requires=[
         'click',
@@ -14,6 +18,10 @@ setup(name='rancher-gitlab-deploy',
         'colorama'
     ],
     entry_points = {
-        'console_scripts': ['rancher-gitlab-deploy=rancher_gitlab_deploy.cli:main'],
+        'console_scripts': [
+            'rancher-gitlab-deploy-upgrade=rancher_gitlab_deploy_upgrade.cli:main',
+            'rancher-gitlab-deploy-finish-upgrade=rancher_gitlab_deploy_finish_upgrade.cli:main',
+            'rancher-gitlab-deploy-rollback=rancher_gitlab_deploy_rollback.cli:main'
+        ],
     }
 )
