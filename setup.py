@@ -8,7 +8,8 @@ setup(name='rancher-gitlab-deploy',
     license='MIT',
     packages=[
         'rancher_gitlab_deploy_upgrade',
-        'rancher_gitlab_deploy_finish_upgrade'
+        'rancher_gitlab_deploy_finish_upgrade',
+        'rancher_gitlab_deploy_rollback'
     ],
     zip_safe=False,
     install_requires=[
@@ -19,7 +20,8 @@ setup(name='rancher-gitlab-deploy',
     entry_points = {
         'console_scripts': [
             'rancher-gitlab-deploy-upgrade=rancher_gitlab_deploy_upgrade.cli:main',
-            'rancher-gitlab-deploy-finish-upgrade=rancher_gitlab_deploy_finish_upgrade.cli:main'
+            'rancher-gitlab-deploy-finish-upgrade=rancher_gitlab_deploy_finish_upgrade.cli:main',
+            'rancher-gitlab-deploy-rollback=rancher_gitlab_deploy_rollback.cli:main'
         ],
     }
 )

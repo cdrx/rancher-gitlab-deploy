@@ -25,15 +25,15 @@ from time import sleep
 @click.option('--stack', envvar='CI_PROJECT_NAMESPACE', default=None, required=True,
               help="The name of the stack in Rancher (defaults to the name of the group in GitLab)")
 @click.option('--service', envvar='CI_PROJECT_NAME', default=None, required=True,
-              help="The name of the service in Rancher to finish upgrade (defaults to the name of the service in GitLab)")
-@click.option('--upgrade-timeout', default=5*60,
-              help="How long to wait, in seconds, for the upgrade to finish before exiting.")
+              help="The name of the service in Rancher to rollback (defaults to the name of the service in GitLab)")
+@click.option('--rollback-timeout', default=5*60,
+              help="How long to wait, in seconds, for a rollback before exiting.")
 @click.option('--debug/--no-debug', default=False,
               help="Enable HTTP Debugging")
 @click.option('--ssl-verify/--no-ssl-verify', default=True,
               help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, upgrade_timeout, debug, ssl_verify):
-    """Finish upgrade of the serivce"""
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, rollback_timeout, debug, ssl_verify):
+    """Rollback previous upgrade of the service"""
 
     if debug:
         debug_requests_on()
@@ -122,25 +122,25 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     else:
         bail("Unable to find a service called '%s', does it exist in Rancher?" % service)
 
-    # 4 -> Finish upgrade for service
+    # 4 -> Rollback the service
 
     if service['state'] != 'upgraded':
-            bail("Unable to finish upgrade: current service state '%s', but it needs to be 'upgraded'" % service['state'])
+            bail("Unable to rollback: current service state '%s', but it needs to be 'upgraded'" % service['state'])
 
     try:
-        r = session.post("%s/projects/%s/services/%s/?action=finishupgrade" % (
+        r = session.post("%s/projects/%s/services/%s/?action=rollback" % (
             api, environment_id, service['id']
         ))
         r.raise_for_status()
     except requests.exceptions.HTTPError:
-        bail("Unable to finish the previous upgrade in Rancher")
+        bail("Unable to rollback")
 
     attempts = 0
     while service['state'] != "active":
         sleep(2)
         attempts += 2
-        if attempts > upgrade_timeout:
-            bail("A timeout occured while waiting for Rancher to finish the previous upgrade")
+        if attempts > rollback_timeout:
+            bail("A timeout occured while waiting for Rancher to rollback the previous upgrade")
         try:
             r = session.get("%s/projects/%s/services/%s" % (
                 api, environment_id, service['id']
