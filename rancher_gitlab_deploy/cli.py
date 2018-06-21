@@ -46,11 +46,13 @@ from time import sleep
               help="If specified, replace the sidekick image (and :tag) with this one during the upgrade", type=(str, str))
 @click.option('--create/--no-create', default=False,
               help="If specified, create Rancher stack and service if they don't exist")
+@click.option('--labels', default=None,
+              help="If specified, add a comma separated list of key=values to add to the service")
 @click.option('--debug/--no-debug', default=False,
               help="Enable HTTP Debugging")
 @click.option('--ssl-verify/--no-ssl-verify', default=True,
               help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, debug, ssl_verify):
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, labels, debug, ssl_verify):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -153,13 +155,24 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             service = s
             break
     else:
+
+        defined_labels = {}
+
+        if labels is not None:
+            labels_as_array = labels.split(',')
+
+            for label in labels_as_array:
+                key, value = label.split('=')
+                defined_labels[key] = value
+
         if create:
             new_service = {
                 'name': service.lower(),
                 'stackId': stack['id'],
                 'startOnCreate': True,
                 'launchConfig': {
-                    'imageUuid': ("docker:%s" % new_image)
+                    'imageUuid': ("docker:%s" % new_image),
+                    'labels': defined_labels
                 }
             }
             try:

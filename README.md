@@ -167,6 +167,8 @@ Options:
   --create / --no-create          Will create the Rancher stack
                                   and service, if they are missed
                                   (needs --new-image option)
+  --labels                        Will add Rancher labels to the service being
+                                  created by passing a comma separated list.
   --help                          Show this message and exit.
 
 ```
