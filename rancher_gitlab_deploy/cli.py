@@ -48,11 +48,13 @@ from time import sleep
               help="If specified, create Rancher stack and service if they don't exist")
 @click.option('--labels', default=None,
               help="If specified, add a comma separated list of key=values to add to the service")
+@click.option('--variables', default=None,
+              help="If specified, add a comma separated list of key=values to add to the service")
 @click.option('--debug/--no-debug', default=False,
               help="Enable HTTP Debugging")
 @click.option('--ssl-verify/--no-ssl-verify', default=True,
               help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, labels, debug, ssl_verify):
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, labels, variables, debug, ssl_verify):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -165,6 +167,15 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                 key, value = label.split('=')
                 defined_labels[key] = value
 
+        defined_environment_variables = {}
+
+        if variables is not None:
+            variables_as_array = variables.split(',')
+
+            for variable in variables_as_array:
+                key, value = variable.split('=')
+                defined_environment_variables[key] = value
+
         if create:
             new_service = {
                 'name': service.lower(),
@@ -172,7 +183,8 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                 'startOnCreate': True,
                 'launchConfig': {
                     'imageUuid': ("docker:%s" % new_image),
-                    'labels': defined_labels
+                    'labels': defined_labels,
+                    'environment': defined_environment_variables
                 }
             }
             try:
