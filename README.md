@@ -169,6 +169,8 @@ Options:
                                   (needs --new-image option)
   --labels                        Will add Rancher labels to the service being
                                   created by passing a comma separated list.
+  --variables                     Will add environment variables to the service being
+                                  created by passing a comma separated list.
   --help                          Show this message and exit.
 
 ```
