@@ -54,6 +54,8 @@ from time import sleep
               help="Deploy hostname")
 @click.option('--port',default='3000',
               help="Applicate port to forward to")
+@click.option('--envvar',default='',multiple=True,
+              help="envvar to set")
 
 def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, debug, ssl_verify, hostname, port):
     """Performs an in service upgrade of the service specified on the command line"""
@@ -167,6 +169,12 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                     'imageUuid': ("docker:%s" % new_image)
                 }
             }
+            if len(envvar) > 0:
+                env_vars = new_service['launchConfig'].get('environments', {})
+                for f in envvar:
+                    [envname,envval] = url.split("=")
+                    env_vars[envname] = envval
+
             if hostname:
                 msg('Deploy using hostname %s' % (hostname))
                 labels = new_service['launchConfig'].get('labels', {})
@@ -251,6 +259,11 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         for idx, secondaryLaunchConfigs in enumerate(service['secondaryLaunchConfigs']):
             if secondaryLaunchConfigs['name'] in new_sidekick_image:
                 upgrade['inServiceStrategy']['secondaryLaunchConfigs'][idx]['imageUuid'] = 'docker:%s' % new_sidekick_image[secondaryLaunchConfigs['name']]
+    if len(envvar) > 0:
+        env_vars = new_service['launchConfig'].get('environments', {})
+        for f in envvar:
+            [envname,envval] = url.split("=")
+            env_vars[envname] = envval
     if hostname:
         msg('Deploy using hostname %s' % (hostname))
         labels = upgrade['inServiceStrategy']['launchConfig'].get('labels', {})
