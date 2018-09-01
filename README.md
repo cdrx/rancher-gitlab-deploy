@@ -156,6 +156,10 @@ Options:
   --wait-for-upgrade-to-finish / --no-wait-for-upgrade-to-finish
                                   Wait for Rancher to finish the upgrade
                                   before this tool exits
+  --rollback-on-error/--no-rollback-on-error
+                                  Rollback the upgrade if an error occured. 
+                                  The rollback will be performed only 
+                                  if the option --wait-for-upgrade-to-finish is passed
   --new-image TEXT                If specified, replace the image (and :tag)
                                   with this one during the upgrade
   --finish-upgrade / --no-finish-upgrade
