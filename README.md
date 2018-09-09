@@ -157,8 +157,8 @@ Options:
                                   Wait for Rancher to finish the upgrade
                                   before this tool exits
   --rollback-on-error/--no-rollback-on-error
-                                  Rollback the upgrade if an error occured. 
-                                  The rollback will be performed only 
+                                  Rollback the upgrade if an error occured.
+                                  The rollback will be performed only
                                   if the option --wait-for-upgrade-to-finish is passed
   --new-image TEXT                If specified, replace the image (and :tag)
                                   with this one during the upgrade
@@ -178,6 +178,9 @@ Options:
 ```
 
 ## History
+
+#### [1.6] - 2018-09-09
+Added the --rollback-on-error option, thanks to @TZK- for the PR
 
 #### [1.5] - 2017-11-25
 Fixed UnicodeError bug with authentication, thank you to @evilmind for the fix
