@@ -36,6 +36,8 @@ from time import sleep
               help="How long to wait, in seconds, for the upgrade to finish before exiting. To skip the wait, pass the --no-wait-for-upgrade-to-finish option.")
 @click.option('--wait-for-upgrade-to-finish/--no-wait-for-upgrade-to-finish', default=True,
               help="Wait for Rancher to finish the upgrade before this tool exits")
+@click.option('--rollback-on-error/--no-rollback-on-error', default=False,
+              help="Rollback the upgrade if an error occured. The rollback will be performed only if the option --wait-for-upgrade-to-finish is passed")
 @click.option('--new-image', default=None,
               help="If specified, replace the image (and :tag) with this one during the upgrade")
 @click.option('--finish-upgrade/--no-finish-upgrade', default=True,
@@ -52,7 +54,7 @@ from time import sleep
               help="Enable HTTP Debugging")
 @click.option('--ssl-verify/--no-ssl-verify', default=True,
               help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, finish_upgrade, sidekicks, new_sidekick_image, create, labels, debug, ssl_verify):
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, rollback_on_error, finish_upgrade, sidekicks, new_sidekick_image, create, labels, debug, ssl_verify):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -272,7 +274,39 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             sleep(2)
             attempts += 2
             if attempts > upgrade_timeout:
-                bail("A timeout occured while waiting for Rancher to complete the upgrade")
+                message = "A timeout occured while waiting for Rancher to complete the upgrade"
+                if rollback_on_error:
+                    bail(message, exit=False)
+                    warn("Processing image rollback...")
+                    
+                    try:
+                        r = session.post("%s/projects/%s/services/%s/?action=rollback" % (
+                            api, environment_id, service['id']
+                        ))
+                        r.raise_for_status()
+                    except requests.exceptions.HTTPError:
+                        bail("Unable to request a rollback on Rancher")
+
+                    attempts = 0
+                    while service['state'] != "active":
+                        sleep(2)
+                        attempts += 2
+                        if attempts > upgrade_timeout:
+                            bail("A timeout occured while waiting for Rancher to rollback the upgrade to its latest running state")
+                        try:
+                            r = session.get("%s/projects/%s/services/%s" % (
+                                api, environment_id, service['id']
+                            ))
+                            r.raise_for_status()
+                        except requests.exceptions.HTTPError:
+                            bail("Unable to request the service status from the Rancher API")
+                        else:
+                            service = r.json()
+
+                    warn("Service sucessfully rolled back")
+                    sys.exit(1)
+                else:
+                    bail(message)
             try:
                 r = session.get("%s/projects/%s/services/%s" % (
                     api, environment_id, service['id']
@@ -316,15 +350,16 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
 
     sys.exit(0)
 
-def msg(msg):
-    click.echo(click.style(msg, fg='green'))
+def msg(message):
+    click.echo(click.style(message, fg='green'))
 
-def warn(msg):
-    click.echo(click.style(msg, fg='yellow'))
+def warn(message):
+    click.echo(click.style(message, fg='yellow'))
 
-def bail(msg):
-    click.echo(click.style('Error: ' + msg, fg='red'))
-    sys.exit(1)
+def bail(message, exit=True):
+    click.echo(click.style('Error: ' + message, fg='red'))
+    if (exit):
+        sys.exit(1)
 
 def debug_requests_on():
     '''Switches on logging of the requests module.'''
