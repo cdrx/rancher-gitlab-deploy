@@ -191,6 +191,7 @@ Options:
 
 #### [1.6] - 2018-09-09
 Added the --rollback-on-error option, thanks to @TZK- for the PR
+Added the --label, --variables, --variable options, thankls to @tsteenkamp for the PR
 
 #### [1.5] - 2017-11-25
 Fixed UnicodeError bug with authentication, thank you to @evilmind for the fix
