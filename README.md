@@ -182,7 +182,7 @@ Options:
   --variable KEY VALUE            Alternative way of adding environment variables to the
                                   service.
                                   You can pass this option multiple times to create
-                                  multiple labels.
+                                  multiple environment variables.
   --help                          Show this message and exit.
 
 ```
