@@ -183,6 +183,12 @@ Options:
                                   service.
                                   You can pass this option multiple times to create
                                   multiple environment variables.
+  --service-links                 Will set service links to the service being
+                                  created by passing a comma separated list.
+  --service-link KEY VALUE        Alternative way of setting service links to the
+                                  service.
+                                  You can pass this option multiple times to set
+                                  multiple service links.
   --help                          Show this message and exit.
 
 ```
