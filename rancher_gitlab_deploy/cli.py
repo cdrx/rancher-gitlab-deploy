@@ -91,7 +91,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         labels_as_array = labels.split(',')
 
         for label_item in labels_as_array:
-            key, value = label_item.split('=')
+            key, value = label_item.split('=', 1)
             defined_labels[key] = value
 
     if label:
@@ -107,7 +107,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
         variables_as_array = variables.split(',')
 
         for variable_item in variables_as_array:
-            key, value = variable_item.split('=')
+            key, value = variable_item.split('=', 1)
             defined_environment_variables[key] = value
 
     if variable:
