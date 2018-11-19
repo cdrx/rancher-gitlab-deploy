@@ -183,6 +183,7 @@ Options:
                                   service.
                                   You can pass this option multiple times to create
                                   multiple environment variables.
+  --host-id                       Will deploy service on sheduled host.
   --help                          Show this message and exit.
 
 ```
