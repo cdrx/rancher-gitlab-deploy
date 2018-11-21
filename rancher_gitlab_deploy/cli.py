@@ -5,12 +5,14 @@ import requests
 import json
 import logging
 import contextlib
+
 try:
-    from http.client import HTTPConnection # py3
+    from http.client import HTTPConnection  # py3
 except ImportError:
-    from httplib import HTTPConnection # py2
+    from httplib import HTTPConnection  # py2
 
 from time import sleep
+
 
 @click.command()
 @click.option('--rancher-url', envvar='RANCHER_URL', required=True,
@@ -32,7 +34,7 @@ from time import sleep
               help="Number of containers to upgrade at once")
 @click.option('--batch-interval', default=2,
               help="Number of seconds to wait between upgrade batches")
-@click.option('--upgrade-timeout', default=5*60,
+@click.option('--upgrade-timeout', default=5 * 60,
               help="How long to wait, in seconds, for the upgrade to finish before exiting. To skip the wait, pass the --no-wait-for-upgrade-to-finish option.")
 @click.option('--wait-for-upgrade-to-finish/--no-wait-for-upgrade-to-finish', default=True,
               help="Wait for Rancher to finish the upgrade before this tool exits")
@@ -87,7 +89,6 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     # 0 -> Authenticate all future requests
     session.auth = (rancher_key, rancher_secret)
 
-
     # Check for labels and environment variables to set
     defined_labels = {}
 
@@ -103,7 +104,6 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             key = item[0]
             value = item[1]
             defined_labels[key] = value
-
 
     defined_environment_variables = {}
 
@@ -229,38 +229,28 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                     service_links_as_array = service_links.split(',')
 
                     for service_link_item in service_links_as_array:
-                        name, referencedServiceName = service_link_item.split('=', 1)
-
-                        serviceId = ''
+                        name, reference = service_link_item.split('=', 1)
+                        serviceId = None
 
                         for s in services:
-                            if s['name'].lower() == referencedServiceName.lower():
+                            if s['name'].lower() == reference.lower():
                                 serviceId = s['id']
                                 break
 
                         if serviceId:
-                            defined_service_links.append({
-                                 'name': name,
-                                'serviceId': serviceId,
-                            })
+                            defined_service_links.append({'name': name, 'serviceId': serviceId})
 
                 if service_link:
-                    for item in service_link:
-                        name = item[0]
-                        referencedServiceName = item[1]
-
-                        serviceId = ''
+                    for name, reference in service_link:
+                        serviceId = None
 
                         for s in services:
-                            if s['name'].lower() == referencedServiceName.lower():
+                            if s['name'].lower() == reference.lower():
                                 serviceId = s['id']
                                 break
 
                         if serviceId:
-                            defined_service_links.append({
-                                 'name': name,
-                                'serviceId': serviceId,
-                            })
+                            defined_service_links.append({'name': name, 'serviceId': serviceId})
 
                 if defined_service_links:
                     msg("Setting service links for service %s in environment %s with image %s..." % (
@@ -314,7 +304,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
 
     upgrade = {'inServiceStrategy': {
         'batchSize': batch_size,
-        'intervalMillis': batch_interval * 1000, # rancher expects miliseconds
+        'intervalMillis': batch_interval * 1000,  # rancher expects miliseconds
         'startFirst': start_before_stopping,
         'launchConfig': {
         },
@@ -442,16 +432,20 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
 
     sys.exit(0)
 
+
 def msg(message):
     click.echo(click.style(message, fg='green'))
 
+
 def warn(message):
     click.echo(click.style(message, fg='yellow'))
+
 
 def bail(message, exit=True):
     click.echo(click.style('Error: ' + message, fg='red'))
     if (exit):
         sys.exit(1)
+
 
 def debug_requests_on():
     '''Switches on logging of the requests module.'''
