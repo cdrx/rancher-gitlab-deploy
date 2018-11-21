@@ -56,11 +56,15 @@ from time import sleep
               help="If specified, add a comma separated list of key=values to add to the service")
 @click.option('--variable', default=None, multiple=True,
               help="If specified, add a environment variable to the service", type=(str, str))
+@click.option('--service-links', default=None,
+              help="If specified, add a comma separated list of key=values to add to the service")
+@click.option('--service-link', default=None, multiple=True,
+              help="If specified, add a service link to the service", type=(str, str))
 @click.option('--debug/--no-debug', default=False,
               help="Enable HTTP Debugging")
 @click.option('--ssl-verify/--no-ssl-verify', default=True,
               help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, rollback_on_error, finish_upgrade, sidekicks, new_sidekick_image, create, labels, label, variables, variable, debug, ssl_verify):
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, rollback_on_error, finish_upgrade, sidekicks, new_sidekick_image, create, labels, label, variables, variable, service_links, service_link, debug, ssl_verify):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -218,6 +222,55 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                 ), json=new_service)
                 r.raise_for_status()
                 service = r.json()
+
+                defined_service_links = []
+
+                if service_links is not None:
+                    service_links_as_array = service_links.split(',')
+
+                    for service_link_item in service_links_as_array:
+                        name, referencedServiceName = service_link_item.split('=', 1)
+
+                        serviceId = ''
+
+                        for s in services:
+                            if s['name'].lower() == referencedServiceName.lower():
+                                serviceId = s['id']
+                                break
+
+                        if serviceId:
+                            defined_service_links.append({
+                                 'name': name,
+                                'serviceId': serviceId,
+                            })
+
+                if service_link:
+                    for item in service_link:
+                        name = item[0]
+                        referencedServiceName = item[1]
+
+                        serviceId = ''
+
+                        for s in services:
+                            if s['name'].lower() == referencedServiceName.lower():
+                                serviceId = s['id']
+                                break
+
+                        if serviceId:
+                            defined_service_links.append({
+                                 'name': name,
+                                'serviceId': serviceId,
+                            })
+
+                if defined_service_links:
+                    msg("Setting service links for service %s in environment %s with image %s..." % (
+                        new_service['name'], environment_name, new_image
+                    ))
+                    r = session.post(service['actions']['setservicelinks'], json={'serviceLinks': defined_service_links})
+                    r.raise_for_status()
+                    service = r.json()
+                    msg("Service links set")
+
                 msg("Creation finished")
                 sys.exit(0)
             except requests.exceptions.HTTPError:
