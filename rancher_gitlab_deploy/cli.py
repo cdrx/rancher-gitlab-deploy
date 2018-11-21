@@ -246,10 +246,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                                 break
 
                         if serviceId:
-                            defined_service_links.append({
-                                 'name': name,
-                                'serviceId': serviceId,
-                            })
+                            defined_service_links.append({'name': name, 'serviceId': serviceId})
 
                 if service_link:
                     for item in service_link:
@@ -264,10 +261,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                                 break
 
                         if serviceId:
-                            defined_service_links.append({
-                                 'name': name,
-                                'serviceId': serviceId,
-                            })
+                            defined_service_links.append({'name': name, 'serviceId': serviceId})
 
                 if defined_service_links:
                     msg("Setting service links for service %s in environment %s with image %s..." % (
