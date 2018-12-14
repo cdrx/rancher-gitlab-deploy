@@ -156,6 +156,10 @@ Options:
   --wait-for-upgrade-to-finish / --no-wait-for-upgrade-to-finish
                                   Wait for Rancher to finish the upgrade
                                   before this tool exits
+  --rollback-on-error/--no-rollback-on-error
+                                  Rollback the upgrade if an error occured.
+                                  The rollback will be performed only
+                                  if the option --wait-for-upgrade-to-finish is passed
   --new-image TEXT                If specified, replace the image (and :tag)
                                   with this one during the upgrade
   --finish-upgrade / --no-finish-upgrade
@@ -167,11 +171,33 @@ Options:
   --create / --no-create          Will create the Rancher stack
                                   and service, if they are missed
                                   (needs --new-image option)
+  --labels                        Will add Rancher labels to the service being
+                                  created by passing a comma separated list.
+  --label KEY VALUE               Alternative way of adding a Rancher label to the
+                                  service.
+                                  You can pass this option multiple times to create
+                                  multiple labels.
+  --variables                     Will add environment variables to the service being
+                                  created by passing a comma separated list.
+  --variable KEY VALUE            Alternative way of adding environment variables to the
+                                  service.
+                                  You can pass this option multiple times to create
+                                  multiple environment variables.
+  --service-links                 Will set service links to the service being
+                                  created by passing a comma separated list.
+  --service-link KEY VALUE        Alternative way of setting service links to the
+                                  service.
+                                  You can pass this option multiple times to set
+                                  multiple service links.
   --help                          Show this message and exit.
 
 ```
 
 ## History
+
+#### [1.6] - 2018-09-09
+Added the --rollback-on-error option, thanks to @TZK- for the PR
+Added the --label, --variables, --variable options, thankls to @tsteenkamp for the PR
 
 #### [1.5] - 2017-11-25
 Fixed UnicodeError bug with authentication, thank you to @evilmind for the fix
