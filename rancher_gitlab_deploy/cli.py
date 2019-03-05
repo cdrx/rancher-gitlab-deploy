@@ -70,7 +70,8 @@ from time import sleep
              help = 'If specified, add a comma separated list of secrets to the service')
 @click.option('--secret', default = None, multiple = True,
               help='If specified add a secret to the service')
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, rollback_on_error, finish_upgrade, sidekicks, new_sidekick_image, create, labels, label, variables, variable, service_links, service_link, debug, ssl_verify):
+
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, rollback_on_error, finish_upgrade, sidekicks, new_sidekick_image, create, labels, label, variables, variable, service_links, service_link, debug, ssl_verify, secrets, secret):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -133,7 +134,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
 
         for secret_item in secrets_as_array:
             key, value = secret_item.split('=', 1)
-            defined_secrets.append('type': 'secretReference', 'name': key)
+            defined_secrets.append( { 'type': 'secretReference', 'name': key } )
 
     if secret:
         for item in secret:
@@ -165,16 +166,21 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             bail("No environment in Rancher matches your request")
 
     # map secrets to id (checking if passed secrets are defined in the environment)
-    for secret in defined_secrets.iteritems():
+    for def_secret in defined_secrets:
         # try to retrieve secret by name
         try:
-            r = session.get("%s/projects/%s/secrets?name=%s" % (apiv2, environment_id, secret['secret']))
+            r = session.get("%s/projects/%s/secrets?name=%s" % (apiv2, environment_id, def_secret['name']))
             r.raise_for_status()
         except requests.excptions.HTTPError:
-            bail("Unable to connect to Rancher at %s to secret id for %s - are the URL and API key right? does %s exist ?" % host, secret['secret'],secret['secret'])
+            bail("Unable to connect to Rancher at %s to secret id for %s - are the URL and API key right? does %s exist ?" % host, def_secret['name'],def_secret['name'])
         else:
             result = r.json()['data']
-            secret['secretId'] = result['id']
+            if debug:
+                msg("secret query result: %s" % result)
+            if len(result) > 0:
+              def_secret['secretId'] = result[0]['id']
+            else:
+              bail("Cannot find secret %s in environment %s ?!" %  (def_secret['name'], environment_id))
     
         
 
