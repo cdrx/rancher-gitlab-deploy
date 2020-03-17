@@ -359,7 +359,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     if len(envvar) > 0:
         env_vars = upgrade['inServiceStrategy']['launchConfig'].get('environment', {})
         for f in envvar:
-            [envname,envval] = f.split("=")
+            [envname,envval] = f.split("=", 1)
             env_vars[envname] = envval
         upgrade['inServiceStrategy']['launchConfig']['environment'] = env_vars
     if hostname:
