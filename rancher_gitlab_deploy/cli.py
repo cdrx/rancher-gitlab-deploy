@@ -222,6 +222,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
             if len(envvar) > 0:
                 env_vars = new_service['launchConfig'].get('environment', {})
                 for f in envvar:
+                    msg('envvar %s', f)
                     [envname,envval] = f.split("=")
                     env_vars[envname] = envval
                 new_service['launchConfig']['environment'] = env_vars
