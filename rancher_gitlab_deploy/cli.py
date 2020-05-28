@@ -223,7 +223,7 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                 env_vars = new_service['launchConfig'].get('environment', {})
                 for f in envvar:
                     msg('envvar %s' % (f))
-                    [envname,envval] = f.split("=")
+                    [envname,envval] = f.split("=", 1)
                     env_vars[envname] = envval
                 new_service['launchConfig']['environment'] = env_vars
             if hostname:
