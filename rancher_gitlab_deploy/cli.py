@@ -62,11 +62,13 @@ from time import sleep
               help="If specified, add a comma separated list of key=values to add to the service")
 @click.option('--service-link', default=None, multiple=True,
               help="If specified, add a service link to the service", type=(str, str))
+@click.option('--host-id', default=None,
+              help="If specified, service will be deployed on requested host")
 @click.option('--debug/--no-debug', default=False,
               help="Enable HTTP Debugging")
 @click.option('--ssl-verify/--no-ssl-verify', default=True,
               help="Disable certificate checks. Use this to allow connecting to a HTTPS Rancher server using an self-signed certificate")
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, rollback_on_error, finish_upgrade, sidekicks, new_sidekick_image, create, labels, label, variables, variable, service_links, service_link, debug, ssl_verify):
+def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, rollback_on_error, finish_upgrade, sidekicks, new_sidekick_image, create, labels, label, variables, variable, service_links, service_link, host_id, debug, ssl_verify):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -212,6 +214,11 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                     'environment': defined_environment_variables
                 }
             }
+
+            if host_id is not None:
+                msg("Scheduled host %s" % host_id)
+                new_service['launchConfig']['requestedHostId'] = host_id
+
             try:
                 msg("Creating service %s in environment %s with image %s..." % (
                     new_service['name'], environment_name, new_image
