@@ -128,6 +128,8 @@ Options:
                                   [required]
   --rancher-secret TEXT           The secret for the access API key
                                   [required]
+  --rancher-label-separator TEXT  Where the default separator (',') could
+                                  cause issues
   --environment TEXT              The name of the environment to add the host
                                   into (only needed if you are using an
                                   account API key instead of an environment
@@ -135,11 +137,6 @@ Options:
   --stack TEXT                    The name of the stack in Rancher (defaults
                                   to the name of the group in GitLab)
                                   [required]
-  --sidekicks/--no-sidekicks      Upgrade service sidekicks at the same time?
-                                  Defaults to not upgrading sidekicks
-  --new-sidekick-image NAME IMAGE If specified, replace the named sidekick image
-                                  (and :tag) with this one during the upgrade.
-                                  This flag can be used more than once.
   --service TEXT                  The name of the service in Rancher to
                                   upgrade (defaults to the name of the service
                                   in GitLab)  [required]
@@ -156,45 +153,53 @@ Options:
   --wait-for-upgrade-to-finish / --no-wait-for-upgrade-to-finish
                                   Wait for Rancher to finish the upgrade
                                   before this tool exits
-  --rollback-on-error/--no-rollback-on-error
+  --rollback-on-error / --no-rollback-on-error
                                   Rollback the upgrade if an error occured.
-                                  The rollback will be performed only
-                                  if the option --wait-for-upgrade-to-finish is passed
+                                  The rollback will be performed only if the
+                                  option --wait-for-upgrade-to-finish is
+                                  passed
   --new-image TEXT                If specified, replace the image (and :tag)
                                   with this one during the upgrade
   --finish-upgrade / --no-finish-upgrade
                                   Mark the upgrade as finished after it
                                   completes
-  --ssl-verify / --no-ssl-verify  Whether we should skip certificate checks
-                                  or not when connecting to the Rancher API.
-                                  Default behaviour is to check cert validity.
-  --create / --no-create          Will create the Rancher stack
-                                  and service, if they are missed
-                                  (needs --new-image option)
-  --labels                        Will add Rancher labels to the service being
-                                  created by passing a comma separated list.
-  --label KEY VALUE               Alternative way of adding a Rancher label to the
-                                  service.
-                                  You can pass this option multiple times to create
-                                  multiple labels.
-  --variables                     Will add environment variables to the service being
-                                  created by passing a comma separated list.
-  --variable KEY VALUE            Alternative way of adding environment variables to the
-                                  service.
-                                  You can pass this option multiple times to create
-                                  multiple environment variables.
-  --service-links                 Will set service links to the service being
-                                  created by passing a comma separated list.
-  --service-link KEY VALUE        Alternative way of setting service links to the
-                                  service.
-                                  You can pass this option multiple times to set
-                                  multiple service links.
-  --host-id                       Will deploy service on sheduled host.
+  --sidekicks / --no-sidekicks    Upgrade service sidekicks at the same time
+  --new-sidekick-image <TEXT TEXT>...
+                                  If specified, replace the sidekick image
+                                  (and :tag) with this one during the upgrade
+  --create / --no-create          If specified, create Rancher stack and
+                                  service if they don't exist
+  --labels TEXT                   If specified, add a comma separated list of
+                                  key=values to add to the service
+  --label <TEXT TEXT>...          If specified, add a Rancher label to the
+                                  service
+  --variables TEXT                If specified, add a comma separated list of
+                                  key=values to add to the service
+  --variable <TEXT TEXT>...       If specified, add a environment variable to
+                                  the service
+  --service-links TEXT            If specified, add a comma separated list of
+                                  key=values to add to the service
+  --service-link <TEXT TEXT>...   If specified, add a service link to the
+                                  service
+  --host-id TEXT                  If specified, service will be deployed on
+                                  requested host
+  --debug / --no-debug            Enable HTTP Debugging
+  --ssl-verify / --no-ssl-verify  Disable certificate checks. Use this to
+                                  allow connecting to a HTTPS Rancher server
+                                  using an self-signed certificate
+  --secrets TEXT                  If specified, add a comma separated list of
+                                  secrets to the service
+  --secret TEXT                   If specified add a secret to the service
   --help                          Show this message and exit.
-
 ```
 
 ## History
+
+#### [1.7] - 2020-12-16
+Fixed a bug when updating variables on existing service, thanks to @ffouchier
+Added the --rancher-label-separator option, thanks to @NigelGreenway for the PR
+Added the --service-links option, thanks to @mrpolman for the PR
+Added the support for secrets with the --secret option, thanks to @earzur for the PR
 
 #### [1.6] - 2018-09-09
 Added the --rollback-on-error option, thanks to @TZK- for the PR
