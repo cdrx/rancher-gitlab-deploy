@@ -314,10 +314,10 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     upgrade['inServiceStrategy']['launchConfig'] = service['launchConfig']
 
     if defined_labels:
-        upgrade['inServiceStrategy']['launchConfig']['labels'].update(defined_labels)
+        upgrade['inServiceStrategy']['launchConfig']['labels'] = defined_labels
 
     if defined_environment_variables:
-        upgrade['inServiceStrategy']['launchConfig']['environment'].update(defined_environment_variables)
+        upgrade['inServiceStrategy']['launchConfig']['environment'] = defined_environment_variables
 
     # new_sidekick_image parameter needs secondaryLaunchConfigs loaded
     if sidekicks or new_sidekick_image:
