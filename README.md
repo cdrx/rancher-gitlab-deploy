@@ -189,6 +189,7 @@ Options:
                                   service.
                                   You can pass this option multiple times to set
                                   multiple service links.
+  --host-id                       Will deploy service on sheduled host.
   --help                          Show this message and exit.
 
 ```

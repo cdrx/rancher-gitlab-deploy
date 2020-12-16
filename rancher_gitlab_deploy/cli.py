@@ -21,6 +21,7 @@ from time import sleep
               help="The environment or account API key")
 @click.option('--rancher-secret', envvar='RANCHER_SECRET_KEY', required=True,
               help="The secret for the access API key")
+@click.option('--rancher-label-separator', envvar='RANCHER_LABEL_SEPARATOR', required=False, default=',', help="Where the default separator (',') could cause issues")
 @click.option('--environment', default=None,
               help="The name of the environment to add the host into " + \
                    "(only needed if you are using an account API key instead of an environment API key)")
@@ -62,6 +63,8 @@ from time import sleep
               help="If specified, add a comma separated list of key=values to add to the service")
 @click.option('--service-link', default=None, multiple=True,
               help="If specified, add a service link to the service", type=(str, str))
+@click.option('--host-id', default=None,
+              help="If specified, service will be deployed on requested host")
 @click.option('--debug/--no-debug', default=False,
               help="Enable HTTP Debugging")
 @click.option('--ssl-verify/--no-ssl-verify', default=True,
@@ -71,7 +74,7 @@ from time import sleep
 @click.option('--secret', default = None, multiple = True,
               help='If specified add a secret to the service')
 
-def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, rollback_on_error, finish_upgrade, sidekicks, new_sidekick_image, create, labels, label, variables, variable, service_links, service_link, debug, ssl_verify, secrets, secret):
+def main(rancher_url, rancher_key, rancher_secret, rancher_label_separator, environment, stack, service, new_image, batch_size, batch_interval, start_before_stopping, upgrade_timeout, wait_for_upgrade_to_finish, rollback_on_error, finish_upgrade, sidekicks, new_sidekick_image, create, labels, label, variables, variable, service_links, service_link, host_id, debug, ssl_verify, secrets, secret):
     """Performs an in service upgrade of the service specified on the command line"""
 
     if debug:
@@ -100,7 +103,14 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     defined_labels = {}
 
     if labels is not None:
-        labels_as_array = labels.split(',')
+        labels_as_array = labels.split(
+        
+        
+        
+        
+        
+        
+        )
 
         for label_item in labels_as_array:
             key, value = label_item.split('=', 1)
@@ -252,6 +262,11 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
                     'secrets': defined_secrets
                 }
             }
+
+            if host_id is not None:
+                msg("Scheduled host %s" % host_id)
+                new_service['launchConfig']['requestedHostId'] = host_id
+
             try:
                 msg("Creating service %s in environment %s with image %s..." % (
                     new_service['name'], environment_name, new_image
@@ -354,10 +369,10 @@ def main(rancher_url, rancher_key, rancher_secret, environment, stack, service, 
     upgrade['inServiceStrategy']['launchConfig'] = service['launchConfig']
 
     if defined_labels:
-        upgrade['inServiceStrategy']['launchConfig']['labels'].update(defined_labels)
+        upgrade['inServiceStrategy']['launchConfig']['labels'] = defined_labels
 
     if defined_environment_variables:
-        upgrade['inServiceStrategy']['launchConfig']['environment'].update(defined_environment_variables)
+        upgrade['inServiceStrategy']['launchConfig']['environment'] = defined_environment_variables
 
     # new_sidekick_image parameter needs secondaryLaunchConfigs loaded
     if sidekicks or new_sidekick_image:
