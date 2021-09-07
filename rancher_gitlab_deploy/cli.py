@@ -239,8 +239,14 @@ def main(
         labels_as_array = labels.split(rancher_label_separator)
 
         for label_item in labels_as_array:
-            key, value = label_item.split("=", 1)
-            defined_labels[key] = value
+            label_item = label_item.strip()
+
+            if label_item:
+                key, value = label_item.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+
+                defined_labels[key] = value
 
     if label:
         for item in label:
@@ -280,7 +286,7 @@ def main(
             if secret_item:
                 key, value = secret_item.split("=", 1)
                 key = key.strip()
-                
+
                 defined_secrets.append({"type": "secretReference", "name": key})
 
     if secret:
