@@ -254,8 +254,14 @@ def main(
         variables_as_array = variables.split(",")
 
         for variable_item in variables_as_array:
-            key, value = variable_item.split("=", 1)
-            defined_environment_variables[key] = value
+            variable_item = variable_item.strip()
+
+            if variable_item:
+                key, value = variable_item.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+
+                defined_environment_variables[key] = value
 
     if variable:
         for item in variable:
@@ -269,8 +275,13 @@ def main(
         secrets_as_array = secrets.split(",")
 
         for secret_item in secrets_as_array:
-            key, value = secret_item.split("=", 1)
-            defined_secrets.append({"type": "secretReference", "name": key})
+            secret_item = secret_item.strip()
+
+            if secret_item:
+                key, value = secret_item.split("=", 1)
+                key = key.strip()
+                
+                defined_secrets.append({"type": "secretReference", "name": key})
 
     if secret:
         for item in secret:
